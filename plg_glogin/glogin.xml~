@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="3.1" type="plugin" group="authentication">
+<name>Authentication - Glogin</name>
+<author>Voxinteractif Inc.</author>
+<creationDate>October, 2017</creationDate>
+<copyright>2017 VoxInteracitf Inc. All rights reserved.</copyright>
+<license>http://www.gnu.org/copyleft/gpl.html GNU/GPL</license>
+<authorEmail>Mathieu.godin@voxinteractif.com</authorEmail>
+<authorUrl>www.voxinteractif.com</authorUrl>
+<version>1.3</version>
+<description>Gsuite authentification Plugin</description>
+<files>
+<filename plugin="glogin">glogin.php</filename>
+<filename>domain.xml</filename>
+</files>
+<config>
+<fields name="params">
+			<fieldset name="basic"> 
+				<field name="gClientId" type="text" label="Client ID: " description="Your google Client id Key." required="required"/>
+ 				<field name="domainGroup" type="subform" formsource="plugins/authentication/glogin/domain.xml" multiple="true" label="Add Domain" />
+ 			</fieldset>
+ 		</fields>
+</config>
+<scriptfile>glogin.script.php</scriptfile>
+<updateservers>
+   <server type="collection" priority="1" name="Collection Update Glogin">http://vox-dev.com/extentions/Glogin/plg_glogin/list.xml</server>
+</updateservers>
+</extension>

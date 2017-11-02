@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+	<field name="allowedDomain" type="text" label="Restrict domin to: " description="Enter a domain if you want to limit access to one domain only."/>
+   <field name="newUser" type="checkbox" label="Allow new User" description="Allow users in this domain to create a new account if they are still not registered" value="1" />
+	<field name="userGroup" type="usergrouplist" label="User Group" description="Select the userGroup for the user." multiple="multiple" required="required"/>
+</form>
