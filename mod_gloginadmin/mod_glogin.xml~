@@ -19,6 +19,6 @@
  	<install></install>
  	<update></update>
  	<updateservers>
-   <server type="collection" priority="1" name="Collection Update Glogin">http://vox-dev.com/extentions/Glogin/mod_gloginadmin/list.xml</server>
+   <server type="collection" priority="1" name="Collection Update Glogin">http://vox-dev.com/extentions/Glogin/plg_glogin/list.xml</server>
 </updateservers>
 </extension>
