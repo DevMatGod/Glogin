@@ -23,21 +23,14 @@
     along with Glogin.  If not, see <http://www.gnu.org/licenses/>.
  */
  defined('_JEXEC') or die;
+ $adminEnable = true
+ if($adminEnable)
+ {
+ 	require(JPATH_ROOT.'/modules/mod_glogin/mod_glogin.php');
+ }
  
-require_once dirname(__FILE__) . '/helper.php';
-JHtml::_('jquery.framework');
-
-$plugin = JPluginHelper::getPlugin('authentication', 'glogin');
-
-JFactory::getDocument()->addScript("https://apis.google.com/js/platform.js");
-JFactory::getDocument()->addCustomTag("<meta name=\"google-signin-client_id\" content=\"".$params['gClientId']."\">");
-JFactory::getDocument()->addCustomTag("<meta name=\"google-signin-scope\" content=\"profile email\">");
-
-
-$user = JFactory::getUser();
-//if ($user->id) //user is login
-//else //user is logout
-
-require JModuleHelper::getLayoutPath('mod_glogin', $params->get('layout', 'default'));
-
+ else 
+ {
+ 	require JModuleHelper::getLayoutPath('mod_glogin', $params->get('layout', 'noShareSession'));
+ }
 
