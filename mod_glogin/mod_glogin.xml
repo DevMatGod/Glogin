@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" version="3.1" client="site" method="upgrade">
  <name>Glogin</name>
- <version>1.3</version>
+ <version>1.3.3</version>
  <author>Vox Interactif Inc.</author>
  <creationDate>October 2017</creationDate>
  <license>GNU General Public License version 3; see LICENSE.txt</license>
@@ -18,7 +18,4 @@
  	</config>
  	<install></install>
  	<update></update>
- 	<updateservers>
-    <server type="collection">http://vox-dev.com/extentions/Glogin/mod_glogin/list.xml</server>
- 	</updateservers>
 </extension>

@@ -30,7 +30,6 @@
  <form id="gloginForm" style="display:none;" action="<?php echo JRoute::_('index.php', true, $params->get('usesecure')); ?>" method="post">
  <input type="hidden" name="option" value="com_login">
  <input type="hidden" name="task" value="login">
- <input type="hidden" name="isGlogin" value="1">
  <?php echo JHtml::_('form.token'); ?>
  <input type="hidden" name="return" value="<?php echo $return; ?>"/>
  </form>
