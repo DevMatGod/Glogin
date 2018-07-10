@@ -44,6 +44,12 @@
      
      
 		function onUserAuthenticate( $credentials, $options, &$response ){
+			
+			$jinput = JFactory::getApplication()->input;
+			if($jinput->get('isGlogin', false) !== false)
+			{		
+			
+			
 			$theDomain;
 			$theDomain['isOk'] = false;			
     		$plugin = JPluginHelper::getPlugin('authentication', 'glogin');
@@ -51,10 +57,11 @@
      		$domainList = ($pluginParams->get('domainGroup'));
      		$response->type = "Glogin";
      		
-     		if(isset($options['googleToken'])) {
-	     		$payload = $this->checkGoogleAccount($options['googleToken']);
+     		
+     		
+     		if(isset($credentials['password'])) {
+	     		$payload = $this->checkGoogleAccount($credentials['password']);
 	     		if($payload){
-	     			
 					foreach($domainList as $currentDomain => $values) 
 					{
 						if($values->domain == $payload['hd'])
@@ -107,28 +114,7 @@
 	     		}
 	     	
 	     	}
-     		
-     	}
-     	
-     	function onAjaxGlogin()
-     	{
-     		if(JSession::checkToken()) //Check if the user is using a valid token.
-     		{ 
-     			jimport( 'joomla.user.authentication');
-     			$post = JFactory::getApplication()->input->post->getArray();
-     			$auth = JAuthentication::getInstance();
-		      $credentials = array( 'username' => '', 'password' => '' );
-		      $options = array('googleToken' => $post['googleToken']);
-		      $response = $auth->authenticate($credentials, $options);
-     			return $response;
-     		}
-     		else 
-     		{
-     			$response = new stdClass();
-     			$response->status = 11;
-     			$response->error_message = "Invalid Security Token";
-     			return JFactory::getConfig();
-     		}
+	     }
      	}
      	
      	private function checkGoogleAccount($googleToken) {
