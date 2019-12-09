@@ -22,41 +22,39 @@
     You should have received a copy of the GNU General Public License
     along with Glogin.  If not, see <http://www.gnu.org/licenses/>.
  */
- defined('_JEXEC') or die;
- ?>
+defined('_JEXEC') or die;
+JHtml::_('behavior.keepalive');
+$theFormId = 'gloginForm';
  
- <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
- <div class="glogin_error"><p></p></div>
- <form id="gloginForm" style="display:none;" action="<?php echo JRoute::_('index.php', true, $params->get('usesecure')); ?>" method="post">
- <input type="hidden" name="option" value="com_login">
- <input type="hidden" name="task" value="login">
- <input type="hidden" name="isGlogin" value="1">
- <?php echo JHtml::_('form.token'); ?>
- <input type="hidden" name="return" value="<?php echo $return; ?>"/>
- </form>
+$theHTML = '<div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+				<div class="glogin_error"><p></p></div>
+				<form id="'.$theFormId.'" style="display:none;" action="'.JRoute::_('index.php', true, $params->get('usesecure', 0)).'" method="post">
+				<input type="hidden" name="option" value="com_login">
+				<input type="hidden" name="task" value="login">
+				<input type="hidden" name="isGlogin" value="1">
+				'.JHtml::_('form.token').'
+				<input type="hidden" name="return" value="'.$return.'"/>
+				</form>';
+				
+$theHTML .= '<script>
+				function onSignIn(googleUser)  {
+				var Gform = document.getElementById("'.$theFormId.'");
+				var node;
+				var profile = googleUser.getBasicProfile();
+				node = document.createElement("input");
+				node.setAttribute("type", "hidden");
+				node.setAttribute("name", "username");
+				node.setAttribute("value", profile.getEmail());
+				Gform.appendChild(node);
+				node = document.createElement("input");
+				node.setAttribute("type", "hidden");
+				node.setAttribute("name", "passwd");
+				node.setAttribute("value", googleUser.getAuthResponse().id_token);
+				Gform.appendChild(node);
+				googleUser.disconnect();
+				Gform.submit();
+				}
+				</script>
+				';
  
-    <script>
-      function onSignIn(googleUser)  {
-      	
-      	
-			var Gform = document.getElementById("gloginForm");
-			var node;
-			
-			var profile = googleUser.getBasicProfile();
-			
-			node = document.createElement('input');
-			node.setAttribute("type", "hidden");
-			node.setAttribute("name", "username");
-			node.setAttribute("value", profile.getEmail());
-			Gform.appendChild(node);
-			
-			node = document.createElement('input');
-			node.setAttribute("type", "hidden");
-			node.setAttribute("name", "passwd");
-			node.setAttribute("value", googleUser.getAuthResponse().id_token);
-			Gform.appendChild(node);
-			googleUser.disconnect();
-			
-			Gform.submit();
-      } 
-    </script>
+echo $theHTML;
