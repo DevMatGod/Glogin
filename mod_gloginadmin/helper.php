@@ -24,3 +24,4 @@
  */
  
 defined('_JEXEC') or die;
+require(JPATH_ROOT.'/modules/mod_glogin/helper.php');

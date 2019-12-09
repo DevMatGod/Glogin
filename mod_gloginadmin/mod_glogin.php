@@ -23,14 +23,4 @@
     along with Glogin.  If not, see <http://www.gnu.org/licenses/>.
  */
  defined('_JEXEC') or die;
- //$adminEnable = JFactory::getConfig()->get('shared_session');
- if(true /*$adminEnable*/)
- {
- 	require(JPATH_ROOT.'/modules/mod_glogin/mod_glogin.php');
- }
- 
- else 
- {
- 	require JModuleHelper::getLayoutPath('mod_glogin', $params->get('layout', 'noShareSession'));
- }
-
+require(JPATH_ROOT.'/modules/mod_glogin/mod_glogin.php');
