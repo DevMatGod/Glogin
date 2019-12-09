@@ -24,8 +24,8 @@
  */
  
  defined('_JEXEC') or die;
- //jimport('joomla.plugin.plugin');
- //require_once JPATH_LIBRARIES.'/googleAPI/vendor/autoload.php';
+ use Joomla\CMS\User\UserHelper;
+ use Joomla\CMS\User\User;
  
  class plgAuthenticationGlogin extends JPlugin
  {
@@ -40,82 +40,89 @@
      * @since 1.5
      */
      
-     
-     
-     
-		function onUserAuthenticate( $credentials, $options, &$response ){
-			
-			$jinput = JFactory::getApplication()->input;
-			if($jinput->get('isGlogin', false) !== false)
-			{		
-			
-			
-			$theDomain;
-			$theDomain['isOk'] = false;			
-    		$plugin = JPluginHelper::getPlugin('authentication', 'glogin');
-     		$pluginParams = new JRegistry($plugin->params);
-     		$domainList = ($pluginParams->get('domainGroup'));
-     		$response->type = "Glogin";
-     		
-     		
-     		
-     		if(isset($credentials['password'])) {
-	     		$payload = $this->checkGoogleAccount($credentials['password']);
-	     		if($payload){
-					foreach($domainList as $currentDomain => $values) 
-					{
-						if($values->domain == $payload['hd'])
-						{
-							$theDomain['isOk'] = true;
-							$theDomain['domain'] = $values->domain;
-							$theDomain['group'] = $values->userGroup;
-							$theDomain['newUser'] = isset($values->newUser);
-						}
-	     			}
-	     			$result = $this->getUser($payload['email']);	
-					if($theDomain['isOk']) {
-						$user = new stdClass(); 			
-						if(is_null($result))
-						{
-							$user = $this->createUser($payload,$theDomain['group'],$theDomain['newUser']);
-						}
-						else
-						{
-							$user->ok = true;
-							$user->msg = "User Already Exist";
-							$user->id = $result;
-						}
-						
-						if(!$user->ok)
-						{
-							$response->status = JAuthentication::STATUS_FAILURE;
-	     					$response->error_message = $user->msg;
-	   					
-						}
-						else 
-						{
-							$session = JFactory::getSession();
-							$theUser = JFactory::getUser($user->id);
-							$session->set('user', $theUser);
-							$response->status = JAuthentication::STATUS_SUCCESS;
-							
-						}
-					}
-					else 
-					{
-						$response->status = JAuthentication::STATUS_FAILURE;
-	     				$response->error_message = "The email does not have the permission to access this web page.";
-					}
-	     		}
-	     		else
-	     		{
-	     			$response->status = JAuthentication::STATUS_FAILURE;
-	     			$response->error_message = "Bad username or password";
-	     		}
-	     	
-	     	}
-	     }
-     	}
+	function onUserAuthenticate( $credentials, $options, &$response)
+	{
+		$app = JFactory::getApplication();
+		$jinput = $app->input;
+		
+		/* Checking if everything is all right */
+		$response->type = "Glogin";
+		$response->status = JAuthentication::STATUS_FAILURE; // Will return Failure by default.
+		
+		if($jinput->get('isGlogin', false) === false)
+		{
+			$response->msg = 'User not using Glogin.';
+			return;
+		}
+		if(!(isset($credentials['password'])))
+		{
+			$response->msg = 'No token send';
+			return;
+		}
+		
+		// Sending data to google and reciving confirmation
+		$payload = $this->checkGoogleAccount($credentials['password']);
+		
+		if(!($payload))
+		{
+			$response->msg = 'Google did not validated the credentials.';
+			return;
+		}
+		
+		// Validate the Domain.
+		
+		$plugin = JPluginHelper::getPlugin('authentication', 'glogin');
+     	$pluginParams = new JRegistry($plugin->params);
+     	$domainList = ($pluginParams->get('domainGroup'));
+		
+		$domainOption = [];
+		$domainOption['isOk'] = false;
+   	
+		foreach($domainList as $currentDomain => $values) 
+		{
+			if($values->domain == $payload['hd'])
+			{
+				$domainOption['isOk'] = true;
+				$domainOption['domain'] = $values->domain;
+				$domainOption['group'] = $values->userGroup;
+				$domainOption['newUser'] = isset($values->newUser);
+			}
+  		}
+
+		if(!($domainOption['isOk']))
+		{
+			$response->msg = 'Domain is not valide.';
+			return;
+		}
+		
+  		// Getting user
+  		$user = $this->getUser($payload['email']);
+
+  		if(!($user->id)) $user = $this->createUser($payload,$domainOption); // User does't exist. Trying to create one.
+  		if(!($user->id))
+		{
+			$response->msg = 'User could not be created.';
+			return;
+		}
+  		
+		// Everything worked and the user can login
+		$response->email    = $user->email;
+		$response->fullname = $user->name;
+		$response->id 		  = $user->id;
+		$response->status = JAuthentication::STATUS_SUCCESS;
+		
+		if (JFactory::getApplication()->isClient('administrator'))
+		{
+			$response->language = $user->getParam('admin_language');
+		}
+		else
+		{
+			$response->language = $user->getParam('language');
+		}
+		
+		return; // This is the end.
+
+ }
      	
      	private function checkGoogleAccount($googleToken) {
      		$googleApiInstalled = glob(JPATH_LIBRARIES."/google-api-php-client-*",GLOB_ONLYDIR);
@@ -132,57 +139,61 @@
      		{
      			return false;
      		}
-			
      	}
      	
-     	private function getUser($email) {
-     		$db = JFactory::getDbo();
-			$query    = $db->getQuery(true)
-    		->select('id')
-    		->from('#__users')
-    		->where('email=' . $db->quote($email));
+     	private function getUser($username) {
+     		$theUserId = UserHelper::getUserId($username);
+			if($theUserId) return User::getInstance($theUserId);
+	
+			//Check if user is using a other username then email (User as been created without glogin or was edited)  		
+  			$db = JFactory::getDbo();
+			$query = $db->getQuery(true)
+			    ->select($db->quoteName('id'))
+			    ->from($db->quoteName('#__users'))
+			    ->where($db->quoteName('email') . ' = ' . $db->quote($username));
+			    
 			$db->setQuery($query);
-			return $db->loadResult();
-     	}
+			$id = $db->loadResult();
+			if ($theUser = User::getInstance($id)) return $theUser;
+			else return false;
+     	}	
      	
-     	function createUser($thePayload, $groups, $newUser) {     		
+     	function createUser($thePayload, $domainOption) {     		
 			jimport('joomla.user.helper');
 			
-			$theResponse = new stdClass();
-			$theResponse->ok = false;
-			$theResponse->msg = "Can not create new user for this Domain.";
-			$theResponse->id = 0;
+			if(!($domainOption['newUser'])) return false;
 			
-			if(!($newUser)) return $theResponse;
-			
-			$password = JUserHelper::genRandomPassword();
-			$user = \JUser::getInstance();
+			$password = UserHelper::genRandomPassword();
+			$user = User::getInstance();
 			$user->set('id',null);
-			$user->set('password',\JUserHelper::hashPassword($password));
+			$user->set('password',UserHelper::hashPassword($password));
 			$user->set('username',$thePayload['email']);
 			$user->set('email', $thePayload['email']);
 			$user->set('name', $thePayload['name']);
-			$user->set('usertype', 'deprecated');
+			$user->set('groups',$domainOption['group']); 
+			
+			$plugin = JPluginHelper::getPlugin('authentication', 'glogin');
+			$params = new JRegistry($plugin->params);
 		
-			if (!$user->save())
+			$tempUser = JFactory::getUser($params['suid']);
+			$session = JFactory::getSession();
+			$session->set('user', $tempUser);
+			$userIsSave = $user->save();
+			$session->set('user', null);
+
+			if ($userIsSave) return User::getInstance($user->id);
+			else return false; // User could not be created.
+		}
+		
+		function gloginUserAuthenticate($credentials, $options, &$response)
+		{
+			$this->onUserAuthenticate($credentials, $options, $response);
+			if($response->status == JAuthentication::STATUS_SUCCESS)
 			{
-				$theResponse->ok = false;
-				$theResponse->msg = "Could not save the new User";
-				return $theResponse;
-			}
-			else {
-				$userId = JUserHelper::getUserId($thePayload['email']);
-				for($i = 0; $i < count($groups); $i++)
-				{
-					$userGroup = new stdClass();
-					$userGroup->user_id = $userId;
-					$userGroup->group_id = $groups[$i];
-					$result[$i] = JFactory::getDbo()->insertObject('#__user_usergroup_map', $userGroup);
-				}				
-				$theResponse->ok = true;
-				$theResponse->msg = "User Created";
-				$theResponse->id = $userId;
-				return $theResponse;
+				$tempUser = User::getInstance($response->id);
+				$session = JFactory::getSession();
+				$session->set('user', $tempUser);
+				header('Location: '.JUri::getInstance());
 			}
 		}
  }
